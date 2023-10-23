@@ -1,6 +1,5 @@
 import csv
 from typing import List
-from .0-simple_helper_function import index_range  # Import the index_range function
 
 class Server:
     DATA_FILE = "Popular_Baby_Names.csv"
