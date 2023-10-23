@@ -1,63 +1,69 @@
 #!/usr/bin/env python3
-"""Simple pagination and hyper-paging sample.
 """
+Hypermedia pagination sample.
+"""
+
 import csv
-from typing import List, Tuple, Union, Dict
 import math
+from typing import Dict, List, Tuple
+
 
 def index_range(page: int, page_size: int) -> Tuple[int, int]:
-    """Calculate index range for pagination.
+    """Calculate the start and end index for a given page and page size.
 
     Args:
         page (int): Page number.
         page_size (int): Number of items per page.
 
     Returns:
-        Tuple[int, int]: Start index and end index.
+        Tuple[int, int]: Start and end index.
     """
     start = (page - 1) * page_size
     end = start + page_size
-    return start, end
+    return (start, end)
+
 
 class Server:
     """Server class to paginate a database of popular baby names.
     """
+
     DATA_FILE = "Popular_Baby_Names.csv"
 
     def __init__(self):
-        """Initialize a new Server instance.
+        """Initialize a new Server instance and fetch the dataset.
         """
         self.__dataset = None
 
     def dataset(self) -> List[List]:
-        """Retrieve cached dataset.
+        """Retrieve and cache the dataset.
 
         Returns:
-            List[List]: Dataset as a list of lists.
+            List[List]: Cached dataset.
         """
         if self.__dataset is None:
             with open(self.DATA_FILE) as f:
                 reader = csv.reader(f)
                 dataset = [row for row in reader]
-            self.__dataset = dataset[1:]
+            self.__dataset = dataset[1:]  # Exclude the header row
 
         return self.__dataset
 
     def get_page(self, page: int = 1, page_size: int = 10) -> List[List]:
-        """Retrieve a page of data.
+        """Retrieve a specific page of data.
 
         Args:
             page (int): Page number. Defaults to 1.
             page_size (int): Number of items per page. Defaults to 10.
 
         Returns:
-            List[List]: Page of data.
+            List[List]: Data for the specified page.
         """
         assert isinstance(page, int) and page > 0, "page must be a positive integer"
         assert isinstance(page_size, int) and page_size > 0, "page_size must be a positive integer"
 
         data = self.dataset()
 
+        # Check if the start index is out of range
         if (page - 1) * page_size >= len(data):
             return []
 
@@ -65,32 +71,27 @@ class Server:
 
         return data[start:end]
 
-    def get_hyper(self, page: int = 1, page_size: int = 10) -> Dict[str, Union[int, List[List], None]]:
-        """Retrieve hyper-paged data information.
+    def get_hyper(self, page: int = 1, page_size: int = 10) -> Dict:
+        """Retrieve information about a specific page.
 
         Args:
             page (int): Page number. Defaults to 1.
             page_size (int): Number of items per page. Defaults to 10.
 
         Returns:
-            Dict[str, Union[int, List[List], None]]: Dictionary containing hyper-paging information.
+            Dict: Information about the specified page.
         """
-        assert isinstance(page, int) and page > 0, "page must be a positive integer"
-        assert isinstance(page_size, int) and page_size > 0, "page_size must be a positive integer"
+        page_data = self.get_page(page, page_size)
+        start, end = index_range(page, page_size)
+        total_pages = math.ceil(len(self.__dataset) / page_size)
 
-        data = self.get_page(page, page_size)
-        total_pages = math.ceil(len(self.dataset()) / page_size)
-
-        return {
-            "page_size": len(data),
-            "page": page,
-            "data": data,
-            "next_page": page + 1 if page < total_pages else None,
-            "prev_page": page - 1 if page > 1 else None,
-            "total_pages": total_pages,
+        page_info = {
+            'page_size': len(page_data),
+            'page': page,
+            'data': page_data,
+            'next_page': page + 1 if end < len(self.__dataset) else None,
+            'prev_page': page - 1 if start > 0 else None,
+            'total_pages': total_pages,
         }
 
-# Example usage:
-server = Server()
-hyper_data = server.get_hyper(2, 5)
-print(hyper_data)
+        return page_info
