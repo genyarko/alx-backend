@@ -8,7 +8,7 @@ from base_caching import BaseCaching
 
 class FIFOCache(BaseCaching):
     """Represents an object that allows storing and
-    retrieving items from a dictionary with a FIFO
+    retrieval of items from a dictionary with a FIFO
     removal mechanism when the limit is reached.
     """
     def __init__(self):
